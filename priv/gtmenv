@@ -1,0 +1,12 @@
+#!/bin/sh
+
+if [ ! -d "${EGTM_PRIV}" ] ; then
+  SWD=`dirname $0` ; CWD=`pwd`
+  cd ${SWD} ; SWD=`pwd` ; cd ${CWD}
+  EGTM_PRIV=${SWD}
+fi
+
+export gtm_dist=/usr/lib/fis-gtm/V54002Bx64
+export gtmroutines="$gtm_dist ${EGTM_PRIV}/rtns ."
+export gtmgbldir="${EGTM_PRIV}/gbls/egtm.gld"
+

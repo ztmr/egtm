@@ -1,0 +1,4 @@
+#!/bin/sh
+
+gdberl -pa ebin -pa deps/*/ebin -pa test -pa test/* -sname egtm_console $@
+

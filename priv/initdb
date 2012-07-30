@@ -1,0 +1,41 @@
+#!/bin/sh
+
+. `dirname $0`/gtmenv
+
+DIR=`pwd` ; PRIV=`dirname $0` ; cd $PRIV ; PRIV=`pwd` ; cd $DIR
+
+egtm_db=$PRIV/gbls/egtm.dat
+egtmbig_db=$PRIV/gbls/egtmbig.dat
+
+if [ -f ${egtm_db} ] ; then
+  #echo "Database already exists!"
+  #echo "*** NOT INITIALIZING IT ***"
+  exit 0
+fi
+
+$gtm_dist/mumps -r ^GDE << EOF
+D-R DEFAULT 
+D-S DEFAULT
+T-S -Bloc=4096
+T-S -Lock=40
+T-S -Glob=4096
+T-S -Alloc=1000
+T-S -Ext=3000
+T-R -Rec=4080
+T-R -Key=255
+T-R -N=AL
+T-R -J=BE
+A-S EGTM -F="$egtm_db"
+A-S EGTMBIG -BLOCK=32256 -F="$egtmbig_db"
+A-R EGTM -D=EGTM
+A-R EGTMBIG -REC=32240 -D=EGTMBIG
+LOC -R=EGTM
+C-N * -R=EGTM
+A-N Big* -R=EGTMBIG
+SH -A
+V -A
+E
+EOF
+
+$gtm_dist/mupip create
+
