@@ -241,7 +241,13 @@ longstring_set (Gvn, Subs, Text, BlockSize) when is_integer (BlockSize) ->
   case transaction (fun () ->
       egtm:lock (Gvn, Subs),
       egtm:kill (Gvn, Subs),
-      Data = case Text of undefined -> []; Value -> Value end,
+      Data = case Text of
+        undefined -> []; null -> [];
+        Val when is_atom (Val) -> atom_to_list (Val);
+        Val when is_binary (Val) -> binary_to_list (Val);
+        Val when is_list (Val) -> Val;
+        Val -> lists:flatten (io_lib:format ("~p", [Val]))
+      end,
       longstring_set_internal (Gvn, Subs, Text,
         length (Data), BS, 1),
       egtm:unlock (Gvn, Subs)
