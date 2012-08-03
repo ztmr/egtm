@@ -71,7 +71,8 @@
   lager:info (Info, Args)).
 
 -ifdef (EGTM_METRICS).
--define (metrics (Name, Fun), .?metrics (Name, Fun)).
+-define (metrics (Name, Fun),
+  egtm_metrics:submit (Name, Fun)).
 -else.
 -define (metrics (Name, Fun), Fun ()).
 -endif.
