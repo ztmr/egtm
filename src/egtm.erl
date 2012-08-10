@@ -125,7 +125,8 @@ get (Gvn) -> get (Gvn, []).
 -spec get (Gvn::global_name (), Subs::subscripts ()) -> string ().
 get (Gvn, Subs) when is_list (Subs) ->
   ?trace ("get", [Gvn, Subs]),
-  egtm_string:decode (perform (get, [format_gvn (Gvn, Subs)])).
+  egtm_string:decode (unescape_val (perform (get,
+        [format_gvn (Gvn, Subs)]))).
 
 %% @doc Get value of specific position in specified node
 %% value delimited by specified delimiter
@@ -134,8 +135,8 @@ get (Gvn, Subs) when is_list (Subs) ->
             Piece::integer (), Delim::string ()) -> string ().
 getp (Gvn, Subs, Piece, Delim) when is_number (Piece) ->
   ?trace ("getp", [Gvn, Subs, Piece, Delim]),
-  egtm_string:decode (perform (getp,
-      [format_gvn (Gvn, Subs), Piece, Delim])).
+  egtm_string:decode (unescape_val (perform (getp,
+        [format_gvn (Gvn, Subs), Piece, Delim]))).
 
 %% @equiv getp (Gvn, Subs, Piece, Delim)
 getp (Gvn, Piece, Delim) when is_number (Piece) ->
@@ -162,7 +163,7 @@ set (Gvn, Val) -> set (Gvn, [], Val).
 set (Gvn, Subs, Val) ->
   ?trace ("set", [Gvn, Subs, Val]),
   perform (set, [format_gvn (Gvn, Subs),
-    format_val (egtm_string:encode (Val))]).
+    escape_val (egtm_string:encode (Val))]).
 
 %% @doc Set value of specific position in specified node
 %% value delimited by specified delimiter
@@ -173,7 +174,7 @@ set (Gvn, Subs, Val) ->
 setp (Gvn, Subs, Piece, Delim, Val) when is_number (Piece) ->
   ?trace ("setp", [Gvn, Subs, Piece, Delim, Val]),
   perform (setp, [format_gvn (Gvn, Subs), Piece, Delim,
-    format_val (egtm_string:encode (Val))]).
+    escape_val (egtm_string:encode (Val))]).
 
 %% @equiv setp (Gvn, Subs, Piece, Delim, Val)
 setp (Gvn, Piece, Delim, Val) when is_number (Piece) ->
@@ -249,7 +250,7 @@ order (Gvn, Subs, Direction) when is_list (Subs) ->
   case perform (order, [format_gvn (Gvn, Subs, true), D]) of
     {error, X} -> {error, X};
     Res -> [_|SubsH] = lists:reverse (Subs),
-           lists:reverse ([Res|SubsH])
+           lists:reverse ([unescape_key (Res)|SubsH])
   end.
 
 %% @equiv kill (Gvn, [])
@@ -390,7 +391,7 @@ fast_order (Gvn, Subs) ->
   Subs2 = lists:sublist (Subs, N-1),
   case perform (fast_order, [Fmt, 1]) of
     {error, Error} -> {error, Error};
-    Res            -> Subs2++[Res]
+    Res            -> Subs2++[unescape_key (Res)]
   end.
 
 %% @doc XXX: Alternative `egtm:order ()' experiment.
@@ -401,7 +402,7 @@ call_fast_order (Gvn, Subs) ->
   Subs2 = lists:sublist (Subs, N-1),
   case call ("fastOrder^%egtmapi", [Fmt, 1]) of
     {error, Error} -> {error, Error};
-    Res            -> Subs2++[Res]
+    Res            -> Subs2++[unescape_key (Res)]
   end.
 
 %% @doc XXX: Alternative `egtm:order ()' experiment.
@@ -471,20 +472,22 @@ format_gvn (Gvn, Subs) -> format_gvn (Gvn, Subs, false).
 format_gvn (Gvn, [], _) -> Gvn;
 format_gvn (Gvn, Subs, AllowNull) ->
   [SubsT|SubsH] = lists:reverse (Subs),
-  P1 = ["\""++format_key (S, false)++"\"" || S <- lists:reverse (SubsH)]
-    ++ ["\""++format_key (SubsT, AllowNull)++"\""],
+  P1 = ["\""++escape_key (S, false)++"\"" || S <- lists:reverse (SubsH)]
+    ++ ["\""++escape_key (SubsT, AllowNull)++"\""],
   P2 = string:join (P1, ","),
   lists:flatten (io_lib:format ("~s(~s)", [Gvn, P2])).
 
 format_pgm_call (Pgm, Args) ->
   format_gvn (Pgm, Args).
 
-format_key ([], AllowNull) -> format_key (undefined, AllowNull);
-format_key (undefined, false) -> ?EGTM_NULLKEY;
-format_key (undefined, true) -> [];
-format_key (Key, _) -> term2str (Key).
+escape_key ([], AllowNull) -> escape_key (undefined, AllowNull);
+escape_key (undefined, false) -> ?EGTM_NULLKEY;
+escape_key (undefined, true) -> [];
+escape_key (Key, _) -> term2str (Key).
+unescape_key (Val) -> mumps_unescape (Val).
 
-format_val (Val) -> term2str (Val).
+escape_val (Val) -> term2str (Val).
+unescape_val (Val) -> mumps_unescape (Val).
 
 term2str ([]) -> "";
 term2str (undefined) -> "";
@@ -495,6 +498,10 @@ term2str (T) -> term2str (lists:flatten (io_lib:format ("~p", [T]))).
 mumps_escape ([]) -> [];
 mumps_escape ([$"|T]) -> [$",$"|mumps_escape (T)];
 mumps_escape ([H|T]) -> [H|mumps_escape (T)].
+
+mumps_unescape ([]) -> [];
+mumps_unescape ([$",$"|T]) -> [$"|mumps_unescape (T)];
+mumps_unescape ([H|T]) -> [H|mumps_unescape (T)].
 
 
 %% EUnit Tests
@@ -513,6 +520,9 @@ basic_test () ->
 
   ?assertEqual (ok, ?MODULE:set (Gvn, Subs, "")),
   ?assertEqual ("", ?MODULE:get (Gvn, Subs)),
+
+  ?assertEqual (ok, ?MODULE:set (Gvn, Subs, "\"\"\"")),
+  ?assertEqual ("\"\"\"", ?MODULE:get (Gvn, Subs)),
 
   ?assertEqual (ok, ?MODULE:set (Gvn, Subs, 256.99)),
   ?assertEqual ("256.99", ?MODULE:get (Gvn, Subs)),
