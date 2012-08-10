@@ -555,6 +555,27 @@ NIF (m_data) {
         enif_make_string (env, emsg, ERL_NIF_LATIN1));
 }
 
+NIF (m_iget) {
+
+  if (argc != 1) return enif_make_badarg (env);
+
+  char varnam [EGTM$BUFLEN];
+  if (enif_get_string (env, argv [0], varnam, EGTM$BUFLEN, ERL_NIF_LATIN1) < 0)
+    return enif_make_badarg (env);
+
+  char res [EGTM$BUFLENBIG]; res[0]='\0';
+  gtm_status_t status;
+  LOCK(status = gtm_ci ("m_iget", res, varnam);)
+
+  char emsg [EGTM$BUFLEN];
+  if (check_status (status, emsg) == 0)
+    return enif_make_tuple2 (env, c_AtomOK,
+        enif_make_string (env, res, ERL_NIF_LATIN1));
+  else
+    return enif_make_tuple2 (env, c_AtomError,
+        enif_make_string (env, emsg, ERL_NIF_LATIN1));
+}
+
 static ErlNifFunc nif_funcs [] = {
     {"m_set",        2, m_set},
     {"m_setp",       4, m_setp},
@@ -576,7 +597,8 @@ static ErlNifFunc nif_funcs [] = {
     {"m_data",       1, m_data},
     {"m_horo",       0, m_horo},
     {"m_zver",       0, m_zver},
-    {"m_job",        0, m_job}
+    {"m_job",        0, m_job},
+    {"m_iget",       1, m_iget}
 };
 
 //ERL_NIF_INIT (egtm_worker, nif_funcs, &load, &reload, &upgrade, &unload);

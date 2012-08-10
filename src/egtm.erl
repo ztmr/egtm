@@ -86,7 +86,7 @@
   tstart/0, tstart/1, tcommit/0, trollback/0,
   lock/1, lock/2, unlock/1, unlock/2,
   data/1, data/2, xecute/1,
-  zversion/0, horolog/0, job/0]).
+  zversion/0, horolog/0, job/0, iget/1, iget/2]).
 -export ([fast_order/2, call_fast_order/2, xecute_fast_order/2]).
 %-compile (export_all).
 
@@ -383,6 +383,19 @@ job () ->
   ?trace ("job"),
   perform (job, []).
 
+%% @equiv iget (VarName)
+-spec iget (VarName::string (), Subs::subscripts ()) -> string ().
+iget (VarName, Subs) -> iget (format_gvn (VarName, Subs)).
+
+%% @doc Return a value of intrinsic (system) variable.
+%% Example: to get `$ZRO[utines]', just `egtm:iget ("ZRO")'.
+%% Note: to set an intrinsic variable, there's no `iset'
+%% supported, so feel free to use `xecute'.
+-spec iget (VarName::string ()) -> string ().
+iget (VarName) ->
+  ?trace ("iget"),
+  perform (iget, [VarName]).
+
 %% @doc XXX: Alternative `egtm:order ()' experiment.
 fast_order (Gvn, Subs) ->
   Fmt = format_gvn (Gvn, Subs, true),
@@ -529,6 +542,9 @@ basic_test () ->
 
   ?assertEqual (ok, ?MODULE:zkill (Gvn, Subs)),
   ?assertEqual ("", ?MODULE:get (Gvn, Subs)),
+
+  ?assertEqual (?MODULE:zversion (), ?MODULE:iget ("zver")),
+  ?assertEqual (?MODULE:zversion (), ?MODULE:iget ("zversion")),
 
   ?MODULE:stop (),
   ok.

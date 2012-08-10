@@ -96,6 +96,7 @@ m_xecute     (_)          -> not_loaded (?LINE).
 m_horo       ()           -> not_loaded (?LINE).
 m_zver       ()           -> not_loaded (?LINE).
 m_job        ()           -> not_loaded (?LINE).
+m_iget       (_)          -> not_loaded (?LINE).
 
 
 %% --- NIF initialization ---------

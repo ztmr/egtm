@@ -27,6 +27,7 @@ xecute(x) x x q
 horo() q $h
 zver() q $zver
 job() q $j
+iget(v) q @("$"_v)
 
 ; TP emulation internals
 txtest(k,d,p,w) d txsubmitcmd("w k,d,p,w,!") q
