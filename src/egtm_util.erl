@@ -29,7 +29,7 @@
   stringify/1,
   gforeach/0, gforeach/1,
   foreach/3, foreach/2,
-  set_term/1, transaction/1,
+  set_term/1, transaction/1, lock/2, lock/3,
   longstring_set/4, longstring_set/3,
   longstring_get/2, longstring_kill/2
 ]).
@@ -200,6 +200,21 @@ tp_finish (Status) ->
   {ok, commit | rollback, Status::any ()}.
 transaction (Fun) when is_function (Fun, 0) ->
   egtm:tstart (), tp_finish (catch (Fun ())).
+
+%% @doc Run a function `Fun' within a lock-block
+%% on `Gvn' global with `Subs' subscripts.
+-spec lock (Gvn::global_name (), Subs::subscripts (),
+  Fun::function ()) -> Result::any ().
+lock (Gvn, Subs, Fun) when is_function (Fun) ->
+  egtm:lock (Gvn, Subs),
+  Res = Fun (),
+  egtm:unlock (Gvn, Subs),
+  Res.
+
+%% @equiv lock (Gvn, Subs, Fun)
+-spec lock (Gvn::global_name (), Fun::function ()) -> Result::any ().
+lock (Gvn, Fun) when is_function (Fun) ->
+  lock (Gvn, [], Fun).
 
 %% @doc Longstring get/set support.
 %% `longstring_set' and `longstring_get' usually operates
