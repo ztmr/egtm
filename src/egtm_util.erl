@@ -255,6 +255,7 @@ longstring_set (Gvn, Subs, Text, BlockSize) when is_integer (BlockSize) ->
             (N) -> N end)(BlockSize),
   case transaction (fun () ->
       egtm:lock (Gvn, Subs),
+      Orig = egtm:get (Gvn, Subs),
       egtm:kill (Gvn, Subs),
       Data = case Text of
         undefined -> []; null -> [];
@@ -265,6 +266,10 @@ longstring_set (Gvn, Subs, Text, BlockSize) when is_integer (BlockSize) ->
       end,
       longstring_set_internal (Gvn, Subs, Text,
         length (Data), BS, 1),
+      case Orig of
+        [] -> ok;
+        _  -> egtm:set (Gvn, Subs, Orig)
+      end,
       egtm:unlock (Gvn, Subs)
     end) of
 
@@ -326,6 +331,16 @@ longstring_test () ->
 
   longstring_set (Gvn, Subs, ""),
   ?assertEqual ("", longstring_get (Gvn, Subs)),
+
+  egtm:set (Gvn, Subs, TextShort),
+  longstring_set (Gvn, Subs, TextLong),
+  ?assertEqual (TextLong, longstring_get (Gvn, Subs)),
+  ?assertEqual (TextShort, egtm:get (Gvn, Subs)),
+
+  longstring_kill (Gvn, Subs),
+  ?assertEqual ("", longstring_get (Gvn, Subs)),
+  ?assertEqual (TextShort, egtm:get (Gvn, Subs)),
+
   egtm:stop (),
   ok.
 
