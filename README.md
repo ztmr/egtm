@@ -21,11 +21,15 @@ Notes
 * **GT.M compatibility**
   - EGTM is known to not work with GT.M V5.5-000 Linux x86\_64
     because of [call-in bug](https://groups.google.com/d/topic/comp.lang.mumps/R_GvkUUZaq0/discussion "Call-in bug").
+* **Erlang compatibility**
+  - tested with and best working on Erlang R15B
+  - `egtm_config` requires Erlang common-test package -- this
+     dependency is to be removed soon!
 * **performance:**
   - per-operation lager debug logging (disabled by default)
-    means around ~2000 microseconds overhead,
+    means around ~2000 microseconds overhead on reference machine,
   - metrics (disabled by default) costs around
-    ~30 additional microseconds,
+    ~30 additional microseconds on reference machine,
   - both can be enabled using `EGTM_METRICS` and
     `EGTM_TRACE` compile-time macros,
   - unless `EGTM_METRICS` is defined, the `egtm_metrics`
@@ -66,7 +70,7 @@ Notes
   - Erlang and ChicagoBoss framework,
   - IDEA EGTM,
   - IDEA Object Database (IODB),
-  - IDEA High-Available Cluster (EGTM HAC),
+  - IDEA EGTM High-Available Cluster (EGTM HAC),
   - IDEA CloudOS (ICOS).
   Feel free to contact IDEA Systems via e-mail or
   [www.idea.cz](http://www.idea.cz "IDEA Systems")
@@ -160,7 +164,7 @@ Architecture Schema Design
 
 Licensing
 =========
-Copyright (C) 2012 Tomas Morstein, IDEA Systems
+Copyright (C) 2012 IDEA Systems (www.idea.cz)
 
 This program is free software: you can redistribute
 it and/or modify it under the terms of the GNU Affero
