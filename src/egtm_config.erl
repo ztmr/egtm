@@ -89,7 +89,10 @@ defaults () ->
        [{defaults,[{piece_delim,"|"}]},
         {mode, single},
         {workers,[{nodes,[egtm1,egtm2,egtm3,egtm4]}]},
-        {deny,[kill,do,call,merge,xecute]}]},
+        {deny,[]},
+        {optimize,
+          [{get_cache, [{enabled, false}, {timeout, 5}]},
+           {native_getp, true}]}]},
    {egtm_metrics, [{enabled, false}]}].
 
 %% @doc Get a config value from `priv/egtm.conf'.
@@ -112,7 +115,7 @@ param () ->
           application:set_env (module_name (), config, Conf),
           Conf;
         {error, Error} ->
-          io:format ("ConfigError: ~p~n", [Error]),
+          io:format ("ConfigError: ~p~n", [{config_path (), Error}]),
           application:set_env (module_name (), config, {}),
           {};
         _ ->

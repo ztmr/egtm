@@ -96,6 +96,7 @@
 %% @doc application:start callback, do not use directly!
 start (_Type, _Args) ->
   lager:start (),
+  application:start (ecache),
   ?report_info ("Starting up ~p on node ~p...", [?MODULE, node ()]),
   egtm_admin:initdb (),
   case operation_mode () of
@@ -125,8 +126,23 @@ get (Gvn) -> get (Gvn, []).
 -spec get (Gvn::global_name (), Subs::subscripts ()) -> string ().
 get (Gvn, Subs) when is_list (Subs) ->
   ?trace ("get", [Gvn, Subs]),
-  egtm_string:decode (unescape_val (perform (get,
-        [format_gvn (Gvn, Subs)]))).
+  PerformIt = fun () ->
+    egtm_string:decode (unescape_val (perform (get,
+          [format_gvn (Gvn, Subs)])))
+  end,
+  case egtm_config:param ([egtm,optimize,get_cache,enabled]) of
+    true ->
+      CKey = {Gvn, Subs},
+      TimeOut = egtm_config:param ([egtm,optimize,get_cache,timeout]),
+      case ecache:load (CKey) of
+        {ok, Val} ->
+          Val;
+        _         ->
+          X = PerformIt (), ecache:store (CKey, X, TimeOut), X
+      end;
+    _    ->
+      PerformIt ()
+  end.
 
 %% @doc Get value of specific position in specified node
 %% value delimited by specified delimiter
@@ -135,8 +151,18 @@ get (Gvn, Subs) when is_list (Subs) ->
             Piece::integer (), Delim::string ()) -> string ().
 getp (Gvn, Subs, Piece, Delim) when is_number (Piece) ->
   ?trace ("getp", [Gvn, Subs, Piece, Delim]),
-  egtm_string:decode (unescape_val (perform (getp,
-        [format_gvn (Gvn, Subs), Piece, Delim]))).
+
+  % Use native $GET($PIECE(@Gvn@Subs,Delim,Piece)) or
+  % just $Get(@Gvn@Subs) and emulate $Piece in Erlang?
+  case egtm_config:param ([egtm,optimize,native_getp]) of
+    false ->
+      % Use Erlang-side $Piece only if the native one
+      % is explicitly disabled:
+      epiece (get (Gvn, Subs), Delim, Piece);
+    _     ->
+      egtm_string:decode (unescape_val (perform (getp,
+            [format_gvn (Gvn, Subs), Piece, Delim])))
+  end.
 
 %% @equiv getp (Gvn, Subs, Piece, Delim)
 getp (Gvn, Piece, Delim) when is_number (Piece) ->
@@ -162,6 +188,7 @@ set (Gvn, Val) -> set (Gvn, [], Val).
            Val::string ()) -> ok.
 set (Gvn, Subs, Val) ->
   ?trace ("set", [Gvn, Subs, Val]),
+  clear_cache (Gvn, Subs),
   perform (set, [format_gvn (Gvn, Subs),
     escape_val (egtm_string:encode (Val))]).
 
@@ -173,6 +200,7 @@ set (Gvn, Subs, Val) ->
             Val::string ()) -> ok.
 setp (Gvn, Subs, Piece, Delim, Val) when is_number (Piece) ->
   ?trace ("setp", [Gvn, Subs, Piece, Delim, Val]),
+  clear_cache (Gvn, Subs),
   perform (setp, [format_gvn (Gvn, Subs), Piece, Delim,
     escape_val (egtm_string:encode (Val))]).
 
@@ -261,6 +289,7 @@ kill (Gvn) -> kill (Gvn, []).
 -spec kill (Gvn::global_name (), Subs::subscripts ()) -> ok.
 kill (Gvn, Subs) ->
   ?trace ("kill", [Gvn, Subs]),
+  clear_cache (Gvn, Subs, true),
   perform (kill, [format_gvn (Gvn, Subs)]).
 
 %% @equiv zkill (Gvn, [])
@@ -272,6 +301,7 @@ zkill (Gvn) -> zkill (Gvn, []).
 -spec zkill (Gvn::global_name (), Subs::subscripts ()) -> ok.
 zkill (Gvn, Subs) ->
   ?trace ("zkill", [Gvn, Subs]),
+  clear_cache (Gvn, Subs),
   perform (zkill, [format_gvn (Gvn, Subs)]).
 
 %% @equiv do (Gvn, [])
@@ -301,6 +331,7 @@ merge (SrcGvn, DstGvn) -> merge (SrcGvn, [], DstGvn, []).
              DstGvn::global_name (), DstSubs::subscripts ()) -> ok.
 merge (SrcGvn, SrcSubs, DstGvn, DstSubs) ->
   ?trace ("merge", [SrcGvn, SrcSubs, DstGvn, DstSubs]),
+  clear_cache (DstGvn, DstSubs),
   perform (merge, [format_gvn (DstGvn, DstSubs),
       format_gvn (SrcGvn, SrcSubs)]).
 
@@ -515,6 +546,30 @@ mumps_escape ([H|T]) -> [H|mumps_escape (T)].
 mumps_unescape ([]) -> [];
 mumps_unescape ([$",$"|T]) -> [$"|mumps_unescape (T)];
 mumps_unescape ([H|T]) -> [H|mumps_unescape (T)].
+
+epiece ([], _, _) -> [];
+epiece (_, _, N) when N =< 0 -> [];
+epiece (S, D, N) when N > 0 andalso is_list (S) ->
+  DBin = list_to_binary (D),
+  binary_to_list (epiece_internal (binary:split (list_to_binary (S), DBin), DBin, 1, N)).
+
+epiece_internal ([S|_], _, N, N) -> S;
+epiece_internal ([_, R], D, M, N) ->
+  epiece_internal (binary:split (R, D), D, M+1, N);
+epiece_internal (_, _, _, _) -> <<>>.
+
+clear_cache (Gvn, Subs) -> clear_cache (Gvn, Subs, false).
+clear_cache (Gvn, Subs, Flush) ->
+  case egtm_config:param ([egtm,optimize,get_cache,enabled]) of
+    true ->
+      CKey = {Gvn, Subs},
+      case Flush of
+        true  -> ecache:flush ();
+        false -> ecache:delete (CKey)
+      end,
+      ok;
+    _    -> ok
+  end.
 
 
 %% EUnit Tests
