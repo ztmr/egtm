@@ -6,7 +6,7 @@ if [ ! -d "${EGTM_PRIV}" ] ; then
   EGTM_PRIV=${SWD}
 fi
 
-export gtm_dist=/usr/lib/fis-gtm/V54002Bx64
+export gtm_dist=/usr/lib/fis-gtm/current
 export gtmroutines="$gtm_dist ${EGTM_PRIV}/rtns ."
 export gtmgbldir="${EGTM_PRIV}/gbls/egtm.gld"
 
