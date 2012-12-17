@@ -515,11 +515,10 @@ format_gvn (Gvn, Subs) -> format_gvn (Gvn, Subs, false).
 
 format_gvn (Gvn, [], _) -> Gvn;
 format_gvn (Gvn, Subs, AllowNull) ->
-  [SubsT|SubsH] = lists:reverse (Subs),
-  P1 = ["\""++escape_key (S, false)++"\"" || S <- lists:reverse (SubsH)]
+  SubsT = lists:last (Subs),
+  P1 = ["\""++escape_key (S, false)++"\"," || S <- Subs, S =/= SubsT]
     ++ ["\""++escape_key (SubsT, AllowNull)++"\""],
-  P2 = string:join (P1, ","),
-  lists:flatten (io_lib:format ("~s(~s)", [Gvn, P2])).
+  lists:flatten (Gvn++"("++P1++")").
 
 format_pgm_call (Pgm, Args) ->
   format_gvn (Pgm, Args).
@@ -536,6 +535,10 @@ unescape_val (Val) -> mumps_unescape (Val).
 term2str ([]) -> "";
 term2str (undefined) -> "";
 term2str (T) when is_atom (T) -> atom_to_list (T);
+term2str (T) when is_integer (T) -> integer_to_list (T);
+% NOTE: 256.99 -> 2.56990000000000009095e+02 (what is wrong!)
+% Let's fall all the floats to the slow and ugly io_lib/~p...
+%term2str (T) when is_float (T) -> float_to_list (T);
 term2str (T) when is_list (T) -> mumps_escape (T);
 term2str (T) -> term2str (lists:flatten (io_lib:format ("~p", [T]))).
 
