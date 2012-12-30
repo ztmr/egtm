@@ -101,9 +101,9 @@ m_iget       (_)          -> not_loaded (?LINE).
 
 %% --- NIF initialization ---------
 nif_init () ->
-  SoName = get_priv_dir (?LIBNAME),
+  SoName = egtm_env:get_priv_dir (?LIBNAME),
   ?trace ("Loading EGTM NIF: ~s", [SoName]),
-  load_gtmenv (),
+  egtm_env:init (),
   case erlang:load_nif (SoName, 0) of
     %% XXX: NIF is not ready for upgrades yet :-(
     %{error, {upgrade, _}} -> % new and preferred, rather than reload
@@ -113,35 +113,6 @@ nif_init () ->
     %  ?report_warning ("EGTM NIF: reload not supported yet!"),
     %  ok; % tralala... everything is ok, isn't it? :-)
     ok -> ok; AnotherError -> AnotherError
-  end.
-
-load_gtmenv () ->
-  CallTab = get_priv_dir ("calltab.ci"),
-  os:putenv ("GTMCI", CallTab),
-  Ertns = get_priv_dir ("rtns"),
-  Rtns = case os:getenv ("gtmroutines") of
-    false -> Ertns;
-    Urtns -> Urtns++" "++Ertns
-  end,
-  os:putenv ("gtmroutines", Rtns),
-  case os:getenv ("gtmgbldir") of
-    false ->
-      Gld = filename:join ([get_priv_dir ("gbls"), "egtm.gld"]),
-      os:putenv ("gtmgbldir", Gld);
-    _ -> ok
-  end,
-  ?trace_code ([ ?trace ("GT.M Env: ~s=~s", [K, os:getenv (K)])
-    || K <- ["gtmroutines", "gtmgbldir", "GTMCI"] ]),
-  ok.
-
-get_priv_dir (Name) ->
-  case code:priv_dir (?EGTM_APPNAME) of
-    {error, bad_name} ->
-      case filelib:is_dir (filename:join (["..", priv])) of
-        true -> filename:join (["..", priv, Name]);
-        _    -> filename:join ([priv, Name])
-      end;
-    Dir -> filename:join (Dir, Name)
   end.
 
 not_loaded (Line) ->

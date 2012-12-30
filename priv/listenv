@@ -1,0 +1,6 @@
+#!/bin/sh
+
+. `dirname $0`/gtmenv
+
+env | grep -i -e '^EGTM' -e '^gtm'
+

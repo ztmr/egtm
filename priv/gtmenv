@@ -8,6 +8,7 @@ fi
 
 export EGTM_TMP=/tmp
 export EGTM_GBLS=${EGTM_PRIV}/gbls
+export EGTM_CALLINTAB=${EGTM_PRIV}/calltab.ci
 
 # Database files
 export EGTM_DB_DEFAULT=${EGTM_GBLS}/egtm.dat
@@ -43,4 +44,3 @@ fi
 if [ -f ${EGTM_CUSTOM_ENV:-""} ] ; then
   . ${EGTM_CUSTOM_ENV}
 fi
-

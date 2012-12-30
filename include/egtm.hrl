@@ -44,6 +44,9 @@
 -define (EGTM_LONGSTRING_BLOCKSIZE, 4000).
 -endif.
 
+-define (EGTM_ENV_DELIM_REC, <<"\n">>).
+-define (EGTM_ENV_DELIM_KV, <<"=">>).
+
 -define (str (V), egtm_util:stringify (V)).
 
 -ifdef (EGTM_TRACE).
