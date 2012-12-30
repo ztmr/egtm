@@ -21,6 +21,8 @@ Notes
 * **GT.M compatibility**
   - EGTM is known to not work with GT.M V5.5-000 Linux x86\_64
     because of [call-in bug](https://groups.google.com/d/topic/comp.lang.mumps/R_GvkUUZaq0/discussion "Call-in bug").
+  - EGTM compiled against GT.M V6.0-000 is production ready
+    as well as with the version of 5.4-002B.
 * **Erlang compatibility**
   - tested with and best working on Erlang R15B
   - `egtm_config` requires Erlang common-test package -- this
