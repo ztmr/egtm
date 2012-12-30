@@ -2,12 +2,9 @@
 
 . `dirname $0`/gtmenv
 
-DIR=`pwd` ; PRIV=`dirname $0` ; cd $PRIV ; PRIV=`pwd` ; cd $DIR
+DIR=`pwd` ; CMD_PRIV=`dirname $0` ; cd ${CMD_PRIV} ; CMD_PRIV=`pwd` ; cd $DIR
 
-egtm_db=$PRIV/gbls/egtm.dat
-egtmbig_db=$PRIV/gbls/egtmbig.dat
-
-if [ -f ${egtm_db} ] ; then
+if [ -f ${EGTM_DB_DEFAULT:-""} ] ; then
   #echo "Database already exists!"
   #echo "*** NOT INITIALIZING IT ***"
   exit 0
@@ -25,8 +22,8 @@ T-R -Rec=4080
 T-R -Key=255
 T-R -N=AL
 T-R -J=BE
-A-S EGTM -F="$egtm_db"
-A-S EGTMBIG -BLOCK=32256 -F="$egtmbig_db"
+A-S EGTM -F="\$EGTM_DB_DEFAULT"
+A-S EGTMBIG -BLOCK=32256 -F="\$EGTM_DB_BIG"
 A-R EGTM -D=EGTM
 A-R EGTMBIG -REC=32240 -D=EGTMBIG
 LOC -R=EGTM

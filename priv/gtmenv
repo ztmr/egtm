@@ -3,10 +3,44 @@
 if [ ! -d "${EGTM_PRIV}" ] ; then
   SWD=`dirname $0` ; CWD=`pwd`
   cd ${SWD} ; SWD=`pwd` ; cd ${CWD}
-  EGTM_PRIV=${SWD}
+  export EGTM_PRIV=${SWD}
 fi
 
+export EGTM_TMP=/tmp
+export EGTM_GBLS=${EGTM_PRIV}/gbls
+
+# Database files
+export EGTM_DB_DEFAULT=${EGTM_GBLS}/egtm.dat
+export EGTM_DB_BIG=${EGTM_GBLS}/egtmbig.dat
+
+# Standard GT.M settings
 export gtm_dist=/usr/lib/fis-gtm/current
-export gtmroutines="$gtm_dist ${EGTM_PRIV}/rtns ."
-export gtmgbldir="${EGTM_PRIV}/gbls/egtm.gld"
+export gtmroutines="${gtm_dist} ${EGTM_PRIV}/rtns ."
+export gtmgbldir="${EGTM_GBLS}/egtm.gld"
+export gtm_log=${EGTM_TMP}
+export gtm_tmp=${EGTM_TMP}
+export gtm_badchar="NO"
+export gtm_noundef="YES"
+export gtm_nocenable="YES"
+export gtm_prompt="IDEA\$EGTM>"
+export gtm_icu_version=4.8
+export gtm_chset=UTF-8
+export LC_CTYPE=en_US.UTF-8
+
+# Detect UTF-8 environment
+zchs=`echo ${gtm_chset} | tr '[:lower:]' '[:upper:]'`
+if [ ${zchs:-""} = "UTF-8" ] ; then
+  export gtm_dist="${gtm_dist}/utf8"
+  export gtmroutines="${gtm_dist} ${gtmroutines}"
+fi
+
+# Application-specific environment
+# script can be specified by setting
+# the EGTM_CUSTOM_ENV environment variable
+#
+# NOTE: each of the customized variables
+# must be re-exported to take effect
+if [ -f ${EGTM_CUSTOM_ENV:-""} ] ; then
+  . ${EGTM_CUSTOM_ENV}
+fi
 
