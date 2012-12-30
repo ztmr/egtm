@@ -127,8 +127,8 @@ get (Gvn) -> get (Gvn, []).
 get (Gvn, Subs) when is_list (Subs) ->
   ?trace ("get", [Gvn, Subs]),
   PerformIt = fun () ->
-    egtm_string:decode (unescape_val (perform (get,
-          [format_gvn (Gvn, Subs)])))
+    egtm_string:decode (egtm_util_fmt:unescape_val (perform (get,
+          [egtm_util_fmt:format_gvn (Gvn, Subs)])))
   end,
   case egtm_config:param ([egtm,optimize,get_cache,enabled]) of
     true ->
@@ -160,8 +160,8 @@ getp (Gvn, Subs, Piece, Delim) when is_number (Piece) ->
       % is explicitly disabled:
       epiece (get (Gvn, Subs), Delim, Piece);
     _     ->
-      egtm_string:decode (unescape_val (perform (getp,
-            [format_gvn (Gvn, Subs), Piece, Delim])))
+      egtm_string:decode (egtm_util_fmt:unescape_val (perform (getp,
+            [egtm_util_fmt:format_gvn (Gvn, Subs), Piece, Delim])))
   end.
 
 %% @equiv getp (Gvn, Subs, Piece, Delim)
@@ -189,8 +189,8 @@ set (Gvn, Val) -> set (Gvn, [], Val).
 set (Gvn, Subs, Val) ->
   ?trace ("set", [Gvn, Subs, Val]),
   clear_cache (Gvn, Subs),
-  perform (set, [format_gvn (Gvn, Subs),
-    escape_val (egtm_string:encode (Val))]).
+  perform (set, [egtm_util_fmt:format_gvn (Gvn, Subs),
+    egtm_util_fmt:escape_val (egtm_string:encode (Val))]).
 
 %% @doc Set value of specific position in specified node
 %% value delimited by specified delimiter
@@ -201,8 +201,8 @@ set (Gvn, Subs, Val) ->
 setp (Gvn, Subs, Piece, Delim, Val) when is_number (Piece) ->
   ?trace ("setp", [Gvn, Subs, Piece, Delim, Val]),
   clear_cache (Gvn, Subs),
-  perform (setp, [format_gvn (Gvn, Subs), Piece, Delim,
-    escape_val (egtm_string:encode (Val))]).
+  perform (setp, [egtm_util_fmt:format_gvn (Gvn, Subs), Piece, Delim,
+    egtm_util_fmt:escape_val (egtm_string:encode (Val))]).
 
 %% @equiv setp (Gvn, Subs, Piece, Delim, Val)
 setp (Gvn, Piece, Delim, Val) when is_number (Piece) ->
@@ -275,10 +275,10 @@ order (Gvn, Subs, Direction) when is_list (Subs) ->
     backward -> -1;
     _        -> 1
   end,
-  case perform (order, [format_gvn (Gvn, Subs, true), D]) of
+  case perform (order, [egtm_util_fmt:format_gvn (Gvn, Subs, true), D]) of
     {error, X} -> {error, X};
     Res -> [_|SubsH] = lists:reverse (Subs),
-           lists:reverse ([unescape_key (Res)|SubsH])
+           lists:reverse ([egtm_util_fmt:unescape_key (Res)|SubsH])
   end.
 
 %% @equiv kill (Gvn, [])
@@ -290,7 +290,7 @@ kill (Gvn) -> kill (Gvn, []).
 kill (Gvn, Subs) ->
   ?trace ("kill", [Gvn, Subs]),
   clear_cache (Gvn, Subs, true),
-  perform (kill, [format_gvn (Gvn, Subs)]).
+  perform (kill, [egtm_util_fmt:format_gvn (Gvn, Subs)]).
 
 %% @equiv zkill (Gvn, [])
 zkill (Gvn) -> zkill (Gvn, []).
@@ -302,7 +302,7 @@ zkill (Gvn) -> zkill (Gvn, []).
 zkill (Gvn, Subs) ->
   ?trace ("zkill", [Gvn, Subs]),
   clear_cache (Gvn, Subs),
-  perform (zkill, [format_gvn (Gvn, Subs)]).
+  perform (zkill, [egtm_util_fmt:format_gvn (Gvn, Subs)]).
 
 %% @equiv do (Gvn, [])
 do (Pgm) -> do (Pgm, []).
@@ -311,7 +311,7 @@ do (Pgm) -> do (Pgm, []).
 -spec do (Pgm::program_name (), Args::list ()) -> ok.
 do (Pgm, Args) when is_list (Args) ->
   ?trace ("do", [Pgm, Args]),
-  perform (do, [format_pgm_call (Pgm, Args)]).
+  perform (do, [egtm_util_fmt:format_pgm_call (Pgm, Args)]).
 
 %% @equiv call (Gvn, [])
 call (Pgm) -> call (Pgm, []).
@@ -320,7 +320,7 @@ call (Pgm) -> call (Pgm, []).
 -spec call (Pgm::program_name (), Args::list ()) -> string ().
 call (Pgm, Args) when is_list (Args) ->
   ?trace ("call", [Pgm, Args]),
-  perform (call, [format_pgm_call (Pgm, Args)]).
+  perform (call, [egtm_util_fmt:format_pgm_call (Pgm, Args)]).
 
 %% @equiv merge (SrcGvn, [], DstGvn, [])
 merge (SrcGvn, DstGvn) -> merge (SrcGvn, [], DstGvn, []).
@@ -332,8 +332,8 @@ merge (SrcGvn, DstGvn) -> merge (SrcGvn, [], DstGvn, []).
 merge (SrcGvn, SrcSubs, DstGvn, DstSubs) ->
   ?trace ("merge", [SrcGvn, SrcSubs, DstGvn, DstSubs]),
   clear_cache (DstGvn, DstSubs),
-  perform (merge, [format_gvn (DstGvn, DstSubs),
-      format_gvn (SrcGvn, SrcSubs)]).
+  perform (merge, [egtm_util_fmt:format_gvn (DstGvn, DstSubs),
+      egtm_util_fmt:format_gvn (SrcGvn, SrcSubs)]).
 
 %% @equiv tstart ("")
 tstart () -> tstart ("").
@@ -366,7 +366,7 @@ lock (Gvn) -> lock (Gvn, []).
 -spec lock (Gvn::global_name (), Subs::subscripts ()) -> ok.
 lock (Gvn, Subs) when is_list (Subs) ->
   ?trace ("lock", [Gvn, Subs]),
-  perform (lock, [format_gvn (Gvn, Subs)]).
+  perform (lock, [egtm_util_fmt:format_gvn (Gvn, Subs)]).
 
 %% @equiv unlock (Gvn, [])
 unlock (Gvn) -> unlock (Gvn, []).
@@ -375,7 +375,7 @@ unlock (Gvn) -> unlock (Gvn, []).
 -spec unlock (Gvn::global_name (), Subs::subscripts ()) -> ok.
 unlock (Gvn, Subs) when is_list (Subs) ->
   ?trace ("unlock", [Gvn, Subs]),
-  perform (unlock, [format_gvn (Gvn, Subs)]).
+  perform (unlock, [egtm_util_fmt:format_gvn (Gvn, Subs)]).
 
 %% @doc data (Gvn, []).
 data (Gvn) -> data (Gvn, []).
@@ -385,7 +385,7 @@ data (Gvn) -> data (Gvn, []).
 -spec data (Gvn::global_name (), Subs::subscripts ()) -> integer ().
 data (Gvn, Subs) when is_list (Subs) ->
   ?trace ("data", [Gvn, Subs]),
-  perform (data, [format_gvn (Gvn, Subs)]).
+  perform (data, [egtm_util_fmt:format_gvn (Gvn, Subs)]).
 
 %% @doc Evaluate MUMPS code (MUMPS: `Xecute Mcode').
 %% USE CAREFULLY!
@@ -416,7 +416,7 @@ job () ->
 
 %% @equiv iget (VarName)
 -spec iget (VarName::string (), Subs::subscripts ()) -> string ().
-iget (VarName, Subs) -> iget (format_gvn (VarName, Subs)).
+iget (VarName, Subs) -> iget (egtm_util_fmt:format_gvn (VarName, Subs)).
 
 %% @doc Return a value of intrinsic (system) variable.
 %% Example: to get `$ZRO[utines]', just `egtm:iget ("ZRO")'.
@@ -429,30 +429,30 @@ iget (VarName) ->
 
 %% @doc XXX: Alternative `egtm:order ()' experiment.
 fast_order (Gvn, Subs) ->
-  Fmt = format_gvn (Gvn, Subs, true),
+  Fmt = egtm_util_fmt:format_gvn (Gvn, Subs, true),
   ?trace ("fast_order", [Fmt, 1]),
   N = length (Subs),
   Subs2 = lists:sublist (Subs, N-1),
   case perform (fast_order, [Fmt, 1]) of
     {error, Error} -> {error, Error};
-    Res            -> Subs2++[unescape_key (Res)]
+    Res            -> Subs2++[egtm_util_fmt:unescape_key (Res)]
   end.
 
 %% @doc XXX: Alternative `egtm:order ()' experiment.
 call_fast_order (Gvn, Subs) ->
-  Fmt = format_gvn (Gvn, Subs, true),
+  Fmt = egtm_util_fmt:format_gvn (Gvn, Subs, true),
   ?trace ("call_fast_order", [Fmt, 1]),
   N = length (Subs),
   Subs2 = lists:sublist (Subs, N-1),
   case call ("fastOrder^%egtmapi", [Fmt, 1]) of
     {error, Error} -> {error, Error};
-    Res            -> Subs2++[unescape_key (Res)]
+    Res            -> Subs2++[egtm_util_fmt:unescape_key (Res)]
   end.
 
 %% @doc XXX: Alternative `egtm:order ()' experiment.
 %% XXX: Ensure it to run on the same `egtm_worker'
 xecute_fast_order (Gvn, Subs) ->
-  Fmt = format_gvn (Gvn, Subs, true),
+  Fmt = egtm_util_fmt:format_gvn (Gvn, Subs, true),
   ?trace ("xecute_fast_order", [Fmt, 1]),
   N = length (Subs),
   Subs2 = lists:sublist (Subs, N-1),
@@ -511,50 +511,12 @@ perform_internal (Operation, Args) ->
     Whatever       -> Whatever
   end.
 
-format_gvn (Gvn, Subs) -> format_gvn (Gvn, Subs, false).
-
-format_gvn (Gvn, [], _) -> Gvn;
-format_gvn (Gvn, Subs, AllowNull) ->
-  SubsT = lists:last (Subs),
-  P1 = ["\""++escape_key (S, false)++"\"," || S <- Subs, S =/= SubsT]
-    ++ ["\""++escape_key (SubsT, AllowNull)++"\""],
-  lists:flatten (Gvn++"("++P1++")").
-
-format_pgm_call (Pgm, Args) ->
-  format_gvn (Pgm, Args).
-
-escape_key ([], AllowNull) -> escape_key (undefined, AllowNull);
-escape_key (undefined, false) -> ?EGTM_NULLKEY;
-escape_key (undefined, true) -> [];
-escape_key (Key, _) -> term2str (Key).
-unescape_key (Val) -> mumps_unescape (Val).
-
-escape_val (Val) -> term2str (Val).
-unescape_val (Val) -> mumps_unescape (Val).
-
-term2str ([]) -> "";
-term2str (undefined) -> "";
-term2str (T) when is_atom (T) -> atom_to_list (T);
-term2str (T) when is_integer (T) -> integer_to_list (T);
-% NOTE: 256.99 -> 2.56990000000000009095e+02 (what is wrong!)
-% Let's fall all the floats to the slow and ugly io_lib/~p...
-%term2str (T) when is_float (T) -> float_to_list (T);
-term2str (T) when is_list (T) -> mumps_escape (T);
-term2str (T) -> term2str (lists:flatten (io_lib:format ("~p", [T]))).
-
-mumps_escape ([]) -> [];
-mumps_escape ([$"|T]) -> [$",$"|mumps_escape (T)];
-mumps_escape ([H|T]) -> [H|mumps_escape (T)].
-
-mumps_unescape ([]) -> [];
-mumps_unescape ([$",$"|T]) -> [$"|mumps_unescape (T)];
-mumps_unescape ([H|T]) -> [H|mumps_unescape (T)].
-
 epiece ([], _, _) -> [];
 epiece (_, _, N) when N =< 0 -> [];
 epiece (S, D, N) when N > 0 andalso is_list (S) ->
   DBin = list_to_binary (D),
-  binary_to_list (epiece_internal (binary:split (list_to_binary (S), DBin), DBin, 1, N)).
+  SBin = list_to_binary (S),
+  binary_to_list (epiece_internal (binary:split (SBin, DBin), DBin, 1, N)).
 
 epiece_internal ([S|_], _, N, N) -> S;
 epiece_internal ([_, R], D, M, N) ->
