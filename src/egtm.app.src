@@ -19,7 +19,7 @@
 
 {application, egtm, [
     {description, "IDEA EGTM: Erlang GT.M binding"},
-    {vsn, "0.2.3"},
+    {vsn, "0.2.4"},
     {modules, []},
     {registered, []},
     {applications, [kernel, stdlib]},
